@@ -1,4 +1,5 @@
 import { desc, eq } from "drizzle-orm";
+import type { GroceryCategory, GroceryPriority } from "@/store/grocery-store";
 import { db } from "./db/client";
 import { groceryItems } from "./db/schema";
 
@@ -10,9 +11,9 @@ export const listGroceryItems = async () => {
 
 export const createGroceryItem = async (input: {
   name: string;
-  category: string;
+  category: GroceryCategory;
   quantity: number;
-  priority: string;
+  priority: GroceryPriority;
 }) => {
   const rows = await db
     .insert(groceryItems)

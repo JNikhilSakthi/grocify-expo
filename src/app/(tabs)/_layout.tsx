@@ -7,6 +7,7 @@ import { useEffect } from "react";
 
 export default function TabsLayout() {
   const { isSignedIn, isLoaded } = useAuth();
+  console.log("🔎 [tabs] isLoaded:", isLoaded, "isSignedIn:", isSignedIn);
 
   const { loadItems, items } = useGroceryStore();
 
@@ -25,6 +26,8 @@ export default function TabsLayout() {
   if (!isSignedIn) {
     return <Redirect href="/(auth)/sign-in" />;
   }
+
+  console.log("🔎 [tabs] rendering NativeTabs");
 
   return (
     <NativeTabs tintColor={tabTintColor}>

@@ -1,15 +1,22 @@
-const { neon } = require("@neondatabase/serverless");
-const crypto = require("node:crypto");
+import { randomUUID } from "node:crypto";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
+import { groceryItems } from "../src/lib/server/db/schema";
 
 const databaseUrl = process.env.DATABASE_URL;
 
 if (!databaseUrl) {
-  throw new Error("DATABASE_URL is required. Example: DATABASE_URL=... npm run seed:grocery");
+  throw new Error(
+    "DATABASE_URL is required. Example: DATABASE_URL=... bun run seed:grocery"
+  );
 }
 
-const sql = neon(databaseUrl);
+type SeedItem = Pick<
+  typeof groceryItems.$inferInsert,
+  "name" | "category" | "quantity" | "priority" | "purchased"
+>;
 
-const seedItems = [
+const seedItems: SeedItem[] = [
   { name: "Bananas", category: "Produce", quantity: 6, priority: "medium", purchased: false },
   { name: "Avocado", category: "Produce", quantity: 3, priority: "high", purchased: false },
   { name: "Greek Yogurt", category: "Dairy", quantity: 2, priority: "medium", purchased: true },
@@ -22,8 +29,11 @@ const seedItems = [
   { name: "Eggs", category: "Dairy", quantity: 12, priority: "high", purchased: false },
 ];
 
+const pool = new Pool({ connectionString: databaseUrl });
+const db = drizzle({ client: pool });
+
 async function seed() {
-  await sql`
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS grocery_items (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
@@ -33,27 +43,22 @@ async function seed() {
       priority TEXT NOT NULL DEFAULT 'medium',
       updated_at BIGINT NOT NULL
     )
-  `;
+  `);
 
-  for (const item of seedItems) {
-    await sql`
-      INSERT INTO grocery_items (id, name, category, quantity, purchased, priority, updated_at)
-      VALUES (
-        ${crypto.randomUUID()},
-        ${item.name},
-        ${item.category},
-        ${item.quantity},
-        ${item.purchased},
-        ${item.priority},
-        ${Date.now()}
-      )
-    `;
-  }
+  await db.insert(groceryItems).values(
+    seedItems.map((item) => ({
+      ...item,
+      id: randomUUID(),
+      updated_at: Date.now(),
+    }))
+  );
 
   console.log(`Seed complete: inserted ${seedItems.length} grocery items.`);
 }
 
-seed().catch((error) => {
-  console.error("Seed failed:", error);
-  process.exit(1);
-});
+seed()
+  .catch((error) => {
+    console.error("Seed failed:", error);
+    process.exit(1);
+  })
+  .finally(() => pool.end());

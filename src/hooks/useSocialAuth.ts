@@ -12,7 +12,17 @@ const useSocialAuth = () => {
     setLoadingStrategy(strategy);
 
     try {
-      const { createdSessionId, setActive } = await startSSOFlow({ strategy });
+      const result = await startSSOFlow({ strategy });
+      const { createdSessionId, setActive, signIn, signUp, authSessionResult } = result;
+
+      console.log("🔐 SSO result:", JSON.stringify({
+        createdSessionId,
+        authSessionType: authSessionResult?.type,
+        signInStatus: signIn?.status,
+        signUpStatus: signUp?.status,
+        signUpMissingFields: signUp?.missingFields,
+        signUpUnverifiedFields: signUp?.unverifiedFields,
+      }, null, 2));
 
       if (!createdSessionId || !setActive) {
         Alert.alert("Sign-in incomplete", "Sign-in did not complete. Please try again.");

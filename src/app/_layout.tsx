@@ -6,9 +6,14 @@ import { Stack } from "expo-router";
 import { useColorScheme } from "react-native";
 
 import * as Sentry from "@sentry/react-native";
+import * as WebBrowser from "expo-web-browser";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 
 import "../../global.css";
+
+// Required for Clerk OAuth/SSO: dismisses the in-app browser and hands the
+// session back to the app after the OAuth redirect completes.
+WebBrowser.maybeCompleteAuthSession();
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
